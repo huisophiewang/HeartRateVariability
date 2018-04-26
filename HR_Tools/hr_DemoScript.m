@@ -2,8 +2,8 @@
 % Default data directory
 %  dir_data = 'C:\Users\pavelm\Documents\A_Projects\Affect\HRV\Experiment01\Data';
 clear all
-addpath('C:\Users\Sophie\Documents\MATLAB\HR\HR_Tools')
-dir_data = 'C:\Users\Sophie\Documents\MATLAB\HR\HR_Data'
+addpath('C:\Users\Sophie\Documents\MATLAB\HeartRate\HR_Tools')
+dir_data = 'C:\Users\Sophie\Documents\MATLAB\HeartRate\HR_Data'
 dir_current = pwd();
 %
 % First get all the data for a subject loaded; 

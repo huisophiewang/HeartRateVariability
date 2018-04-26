@@ -7,7 +7,7 @@ if ~exist('SubjID','var') SubjID = 'LWP2_0011'; end
 fprintf('\n>>>>  Loading data for subject: %s\n', SubjID);
 usrID = ['"' SubjID '"']; 
 %dir_data = 'C:\Users\pavelm\Documents\A_Projects\Affect\HRV\Experiment01\Data';
-dir_data = 'C:\Users\Sophie\Documents\MATLAB\HR\HR_Data'
+dir_data = 'C:\Users\Sophie\Documents\MATLAB\HeartRate\HR_Data'
 dir_current = pwd();
 
 % Activity segments of Laboratory Data Collection

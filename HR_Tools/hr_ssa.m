@@ -110,9 +110,14 @@ if plotflag
     figure;subplot(2,1,1);hold on;xlabel('Samples');ylabel('Amplitude')
     plot(xi);grid on;plot(xhat,'r')
     legend('Original','Reconstructed')
-    res = xi - xhat;
+end
+
+res = xi - xhat;
+
+if plotflag
     subplot(2,1,2);plot(res,'g');xlabel('Samples');ylabel('Residual Amplitude');grid on
 end
+
 vr =(sum(lam(I))/sev)*100;
 xhat = xhat + xavg;
 % 
@@ -121,7 +126,7 @@ ix = find(abs(abs(res./sdr))> 1.0);   %Find  errors that exceed moving SD/2 - Th
 rout = xin;
 rout(ix) = xhat(ix);
 if plotflag
-figure; plot(xin); hold on;  plot(xhat); legend('RR','RR-Smooth');
+    figure; plot(xin); hold on;  plot(xhat); legend('RR','RR-Smooth');
 end
 tout = cumsum(rout);
 
