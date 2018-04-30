@@ -3,15 +3,6 @@ dir = pwd();
 addpath(fullfile(dir, 'HeartRate', 'HR_Tools'));
 addpath(fullfile(dir, 'HeartRate', 'HR_Data'));
 
-% input and output files
-fp_in_data = 'LWP2_0019_Data.mat';
-fp_in_timing = 'LWP2_0019_lab_timing.xlsx';
-f_out = 'tmp_lwp_0019_firstbeat_rr_analysis_raw_data.xlsx';
-
-% read input files
-load(fp_in_data); 
-[ndata, tdata, ~] = xlsread(fp_in_timing);
-
 task_names = {
     'Task1 Relaxing Music1', ...
     'Task2 Relaxing Pic1', ...
@@ -34,33 +25,56 @@ task_names = {
     };
 
 
-%time = ndate(4:23,1);
+subj = '0011';
+device = 'FirstBeat';
+%device = 'MSBand';
+
+
+% input and output files
+fp_in_data = sprintf('LWP2_%s_Data.mat', subj);
+fp_in_timing = sprintf('LWP2_%s_lab_timing.xlsx', subj);
+f_out = sprintf('LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
+
+
+% read input files
+load(fp_in_data); 
+[ndata, tdata, ~] = xlsread(fp_in_timing);
 date = datenum(tdata(5,2));
-start_time = date + ndata(5,1);
-end_time = date + ndata(6,1);
+dominant_hand = tdata(11,10);
+
 
 for i=1:length(task_names)
-    write_segment(f_out, FB_Time_RR, FB_RR, start_time, end_time);
+    start_time = date + ndata(4+i,1); % start with ndata(5,1) 
+    end_time = date + ndata(5+i,1);
+    task_name = task_names{i};
+    sprintf('%s', task_name)    
+    if strcmp(device, 'FirstBeat')
+        RR = FB_RR;
+        RR_t = FB_Time_RR;
+    elseif strcmp(device, 'MSBand')
+        if strcmp(dominant_hand, 'RIGHT')
+            RR = BandRR_L;
+            RR_t = BandTimeRR_L;
+        elseif strcmp(dominant_hand, 'LEFT')
+            RR = BandRR_R;
+            RR_t = BandTimeRR_R;  
+        end
+    end    
+    write_segment(f_out, task_name, RR, RR_t, start_time, end_time);
 end
 
-write_segment(f_out, FB_Time_RR, FB_RR, start_time, end_time);
 
-
-% A = [12.7 5.02 -98 63.9 0 -.2 56];
-% xlswrite(fp_out, A);
-
-
-
-function write_segment(f_out, RR_t, RR, start_time, end_time)
+function write_segment(f_out, sheet_name, RR, RR_t, start_time, end_time)
     % get segment data
     idx = find((RR_t >= start_time) & (RR_t <= end_time));
     seg_RR = RR(idx);             
     seg_RR_t = RR_t(idx);
     d = cat(2, seg_RR, seg_RR_t);
-    % write to xlsx file
+    
+    % write to xlsx 
     dir = pwd();
     fp_out = fullfile(dir, 'HeartRate', 'HR_Data', f_out);
-    xlswrite(fp_out, d, 'tmp_sheet');
+    xlswrite(fp_out, d, sheet_name);
 end
 
 
