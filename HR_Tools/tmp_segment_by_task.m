@@ -24,16 +24,18 @@ task_names = {
     'Task18_March'
     };
 
+%debug_task_names = {'Task6_EMA2'};
 
-subj = '0011';
+
+subj = '0003';
 device = 'FirstBeat';
-device = 'MSBand';
+%device = 'MSBand';
 
 
 % input and output files
-fp_in_data = sprintf('LWP2_%s_Data.mat', subj);
+fp_in_data = sprintf('tmp_LWP2_%s_Data.mat', subj);
 fp_in_timing = sprintf('LWP2_%s_lab_timing.xlsx', subj);
-f_out = sprintf('LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
+f_out = sprintf('tmp_LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
 
 
 % read input files
@@ -69,6 +71,7 @@ end
 function write_segment(f_out, sheet_name, RR, RR_t, start_time, end_time)
     % get segment data
     idx = find((RR_t >= start_time) & (RR_t <= end_time));
+    %disp(idx)
     seg_RR = RR(idx);             
     seg_RR_t = RR_t(idx);
     d = cat(2, seg_RR, seg_RR_t);

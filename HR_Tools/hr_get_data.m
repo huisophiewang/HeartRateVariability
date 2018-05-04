@@ -11,14 +11,14 @@ addpath('C:\Users\pavelm\Documents\Matlab_local\tools_local');
 if ~exist('SubjID','var') SubjID = 'LWP2_0011'; end
 usrID = ['"' SubjID '"']; 
 % end
-fnameSave = sprintf('%s_Data.mat',SubjID);    % Mat file to store the data
+fnameSave = sprintf('tmp_%s_Data.mat',SubjID);    % Mat file to store the data
 % if exists(fnameSave,'file')
 %     fprintf('%s exists in current directory\n', fnameSave)
 %     return
 % end
 % Connect to database
 plotflag = false; %true;
-conn2 = database('deephealth2', 'deepresearcher', 'ctpc177!',...
+conn2 = database('deephealth2', 'deepresearcher', 'UJqTPYqKF84YMVNJ',...
         'Vendor', 'MySQL', 'Server', 'deephealthlab.org');
 fprintf('Connecting to DeepHealth Database \n')
 %end
@@ -30,20 +30,20 @@ outlier = ' and unix_timestamp > 0';  % To remove outliers from E4_RR database
 %% Band EDA
 % Extract EDA data for MS band
 selectEDA = 'SELECT unix_timestamp,mb_resistance FROM viewl_msband_gsr where user=';
-fprintf('Fetching Left MS Band RR\n')
+fprintf('Fetching Left MS Band EDA\n')
 Tx = fetch( conn2,[selectEDA, usrID, device_L, order_by_time]);
 % Fetch Band EDA Left to a temp table Tx
-BandEDA_L = table2array(Tx(:,2));
+BandEDA_L = cell2mat(Tx(:,2));
 BandEDA_L = 1000./BandEDA_L;          % Convert from kOhms to microSiemens
-BandTimeEDA_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeEDA_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
                          
 % Fetch Band EDA Right to a temp table Tx                     
-fprintf('Fetching Right MS Band RR\n')
+fprintf('Fetching Right MS Band EDA\n')
 Tx = fetch( conn2,[selectEDA, usrID, device_R, order_by_time]);
-BandEDA_R = table2array(Tx(:,2));
+BandEDA_R = cell2mat(Tx(:,2));
 BandEDA_R = 1000./BandEDA_R;          % Convert from kOhms to microSiemens
-BandTimeEDA_R = datenum(datetime(table2array(Tx(:,1))/1000,'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
+BandTimeEDA_R = datenum(datetime(cell2mat(Tx(:,1))/1000,'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
 if plotflag
     figure
     T0 = min(BandTimeEDA_L(1),BandTimeEDA_R(1));
@@ -66,9 +66,9 @@ selectRR = 'SELECT unix_timestamp, mb_rr FROM viewl_msband_rr where user=';
 fprintf('Fetching Left MS Band RR\n')
 % Band RR Left
 Tx = fetch( conn2,[selectRR, usrID, device_L, order_by_time]);
-BandTimeRR_L = datenum(datetime(table2array(Tx(:,1))/1000,...  % Convert to matlab time
+BandTimeRR_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...  % Convert to matlab time
      'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-rr = table2array(Tx(:,2));        % Raw data in seconds
+rr = cell2mat(Tx(:,2));        % Raw data in seconds
 rrtime = cumsum(rr);
 X = [ones(length(rr),1), rrtime];
 bcoef = regress(BandTimeRR_L,X);
@@ -77,19 +77,21 @@ BandRR_L = 1000*rr;               % Convert to msec
 %
 selectQ = 'SELECT unix_timestamp, mb_heart_rate_quality  FROM viewl_msband_heartrate where user=';
 Tx = fetch( conn2,[selectQ, usrID, device_L, order_by_time]);
-ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
-BandQ_L  = zeros(height(Tx),1);
-ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
+[num_rows, num_cols] = size(Tx);
+BandQ_L  = zeros(num_rows,1);
+%ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
+% couldn't find function findstrcell
+ix = find(strcmp(Tx(:,2),'LOCKED'));
 BandQ_L(ix) = 1;
-BandTimeQ_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeQ_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
 %
 % Band RR Right
 fprintf('Fetching Right MS Band RR\n')
 Tx = fetch( conn2,[selectRR, usrID, device_R, order_by_time]);
-BandTimeRR_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeRR_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-rr = 1000*table2array(Tx(:,2));       % Convert to msec
+rr = 1000*cell2mat(Tx(:,2));       % Convert to msec
 rrtime = cumsum(rr);
 X = [ones(length(rr),1), rrtime];
 bcoef = regress(BandTimeRR_R,X);
@@ -97,11 +99,13 @@ BandTimeRR_R = rrtime/(24*3600) + bcoef(1);
 BandRR_R = 1000*rr;               % Convert to msec
 %
 Tx = fetch( conn2,[selectQ, usrID, device_R, order_by_time]);
-ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
-BandQ_R  = zeros(height(Tx),1);  
-ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
+[num_rows, num_cols] = size(Tx);
+BandQ_R  = zeros(num_rows,1); 
+% ix = findstrcell(table2array(Tx(:,2)),'LOCKED');
+% couldn't find function findstrcell
+ix = find(strcmp(Tx(:,2),'LOCKED'));
 BandQ_R(ix) = 1;
-BandTimeQ_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeQ_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
 if plotflag
     figure
@@ -119,9 +123,9 @@ selectGyro = ['SELECT unix_timestamp,mb_ang_x,mb_ang_y,mb_ang_z,mb_x,',...
 % Band Accelerometer Left
 fprintf('Fetching Left MS Band Gyroscope\n')
 Tx = fetch( conn2,[selectGyro, usrID, device_L, order_by_time]);  
-BandTimeACC_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeACC_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-acc = table2array(Tx(:,5:7));
+acc = cell2mat(Tx(:,5:7));
 tacc = BandTimeACC_L;
 %figure; plot(tacc,acc); datetick
 Band_ACC_L = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data
@@ -129,9 +133,9 @@ Band_ACC_L = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data
 % Band Gyro and Accelerometer Right
 fprintf('Fetching Right MS Band Gyroscope\n')  
 Tx = fetch( conn2,[selectGyro, usrID, device_R, order_by_time]);    
-BandTimeACC_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+BandTimeACC_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-acc = table2array(Tx(:,5:7));
+acc = cell2mat(Tx(:,5:7));
 Band_ACC_R = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data
 if plotflag
     figure
@@ -150,16 +154,16 @@ selectFBRR = ...
     'SELECT unix_timestamp, fb_rr FROM viewl_firstbeat_rr where user=';
 fprintf('Fetching FirstBeat RR\n')
 Tx = fetch( conn2,[selectFBRR, usrID, order_by_time]);  
-FB_Time_RR = datenum(datetime(table2array(Tx(:,1))/1000,...
+FB_Time_RR = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-FB_RR = table2array(Tx(:,2));
+FB_RR = cell2mat(Tx(:,2));
 
 selectFBACC = ...
     'SELECT unix_timestamp, fb_x, fb_y, fb_z FROM viewl_firstbeat_accelerometer where user=';
 fprintf('Fetching FirstBeat Accelerometer\n')
 Tx = fetch( conn2,[selectFBACC, usrID, order_by_time]);  
-FB_Time_GYR = datenum(datetime(table2array(Tx(:,1))/1000,'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-acc = table2array(Tx(:,2:4));
+FB_Time_GYR = datenum(datetime(cell2mat(Tx(:,1))/1000,'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
+acc = cell2mat(Tx(:,2:4));
 FB_ACC = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data
 if plotflag
     figure
@@ -184,15 +188,15 @@ end
 selectEDA = 'SELECT unix_timestamp, e4_gsr FROM viewl_e4_gsr where user=';
 fprintf('Fetching Left E4 EDA\n')
 Tx = fetch( conn2,[selectEDA, usrID, device_L, order_by_time]);
-E4_Time_EDA_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_EDA_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-E4_EDA_L = table2array(Tx(:,2));
+E4_EDA_L = cell2mat(Tx(:,2));
 
 fprintf('Fetching Right E4 EDA\n')
 Tx = fetch( conn2,[selectEDA, usrID, device_R, order_by_time]);
-E4_Time_EDA_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_EDA_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-E4_EDA_R = table2array(Tx(:,2));
+E4_EDA_R = cell2mat(Tx(:,2));
 if plotflag
     figure
     plot(E4_Time_EDA_L,E4_EDA_L); hold on
@@ -204,30 +208,30 @@ end
 selectRR =  'SELECT unix_timestamp, e4_rr FROM viewl_e4_rr where user=';
 fprintf('Fetching Left E4 RR\n')
 Tx = fetch( conn2,[selectRR, usrID, device_L, order_by_time]); 
-E4_Time_RR_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_RR_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-E4_RR_L = table2array(Tx(:,2));
+E4_RR_L = cell2mat(Tx(:,2));
 
 fprintf('Fetching Right E4 RR\n')
 Tx = fetch( conn2,[selectRR, usrID, device_R, order_by_time]);
-E4_Time_RR_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_RR_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-E4_RR_R = table2array(Tx(:,2));
+E4_RR_R = cell2mat(Tx(:,2));
 
 %  E4 ACCELEROMETER  ******************************************************
 selectACC = 'SELECT unix_timestamp, e4_x, e4_y, e4_z FROM viewl_e4_accelerometer where user=';
 fprintf('Fetching Left E4 Accelerometer\n')
 Tx = fetch( conn2,[selectACC, usrID, device_L, order_by_time]); 
-E4_Time_ACC_L = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_ACC_L = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-acc = table2array(Tx(:,2:4));
+acc = cell2mat(Tx(:,2:4));
 E4_ACC_L = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data;
 
 fprintf('Fetching Right E4 Accelerometer\n')
 Tx = fetch( conn2,[selectACC, usrID, device_R, order_by_time]);
-E4_Time_ACC_R = datenum(datetime(table2array(Tx(:,1))/1000,...
+E4_Time_ACC_R = datenum(datetime(cell2mat(Tx(:,1))/1000,...
     'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
-acc = table2array(Tx(:,2:4));
+acc = cell2mat(Tx(:,2:4));
 E4_ACC_R = sqrt(sum(acc.*acc, 2));   % RMS Accelerometer data;
 
 %% Save subject's data
