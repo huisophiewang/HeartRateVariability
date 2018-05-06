@@ -7,7 +7,7 @@ function hr_get_data(SubjID)
 % FB is FirstBeat - the most accurate EKG device in the current experiment
 % E4 is the Empatica product
 % 
-addpath('C:\Users\pavelm\Documents\Matlab_local\tools_local');
+%addpath('C:\Users\pavelm\Documents\Matlab_local\tools_local');
 if ~exist('SubjID','var') SubjID = 'LWP2_0011'; end
 usrID = ['"' SubjID '"']; 
 % end

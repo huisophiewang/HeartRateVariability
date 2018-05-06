@@ -27,7 +27,7 @@ task_names = {
 %debug_task_names = {'Task6_EMA2'};
 
 
-subj = '0003';
+subj = '0011';
 device = 'FirstBeat';
 %device = 'MSBand';
 
@@ -41,7 +41,13 @@ f_out = sprintf('tmp_LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
 % read input files
 load(fp_in_data); 
 [ndata, tdata, ~] = xlsread(fp_in_timing);
-date = datenum(tdata(5,2));
+
+if startsWith(computer('arch'), 'mac')
+    date = datenum(ndata(3,1)+693960);
+else
+    date = datenum(tdata(5,2));
+end
+
 dominant_hand = tdata(11,10);
 
 
@@ -70,16 +76,24 @@ end
 
 function write_segment(f_out, sheet_name, RR, RR_t, start_time, end_time)
     % get segment data
-    idx = find((RR_t >= start_time) & (RR_t <= end_time));
-    %disp(idx)
-    seg_RR = RR(idx);             
-    seg_RR_t = RR_t(idx);
-    d = cat(2, seg_RR, seg_RR_t);
-    
-    % write to xlsx 
-    dir = pwd();
-    fp_out = fullfile(dir, 'HeartRate', 'HR_Data', f_out);
-    xlswrite(fp_out, d, sheet_name);
+    if (~isnan(start_time)) && (~isnan(end_time)) && (start_time < end_time)  
+        idx = find((RR_t >= start_time) & (RR_t <= end_time));
+        %disp(idx)
+        if ~isempty(idx)
+            seg_RR = RR(idx);             
+            seg_RR_t = RR_t(idx);
+            d = cat(2, seg_RR, seg_RR_t);
+
+            % write to xlsx 
+            dir = pwd();
+            fp_out = fullfile(dir, 'HeartRate', 'HR_Data' ,f_out);
+            xlswrite(fp_out, d, sheet_name);
+        else
+            disp("No data found within the range between start_time and end_time");
+        end
+    else
+        disp("Invalid start_time or end_time");
+    end
 end
 
 

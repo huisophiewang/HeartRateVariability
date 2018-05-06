@@ -4,7 +4,7 @@ addpath(fullfile(dir, 'HeartRate', 'HR_Tools'));
 addpath(fullfile(dir, 'HeartRate', 'HR_Data'));
 addpath(fullfile(dir, 'HeartRate', 'HRVAS'));
 
-subj = '0019';
+subj = '0003';
 device = 'FirstBeat';
 %sdevice = 'MSBand';
 
@@ -15,14 +15,17 @@ sheet_names = sheet_names(2:end); % start from the 2nd sheet, 1st sheet is empty
 dir_out = fullfile(dir, 'HeartRate', 'HR_Data', sprintf('tmp_LWP2_%s_HRVAS', subj));
 mkdir(dir_out);
     
-IGNORED_TASKS = {'Task4_IAPS'};
+IGNORED_TASKS = {'Task18_March'};
 for i = 1:length(sheet_names)
     task_name = sheet_names(i);
-%     if any(strcmp(task_name, IGNORED_TASKS))
-%         continue
-%     end
+    fprintf('--------------------------------\n');
+    fprintf('%s started\n', char(task_name));
+    if any(strcmp(task_name, IGNORED_TASKS))
+        continue
+    end
     clean(f_in, dir_out, subj, device, char(task_name));
     disp(task_name);
+    fprintf('%s finished\n', char(task_name));
 end
     
 
@@ -34,7 +37,7 @@ function clean(f_in, dir_out, subj, device, task_name)
     RR_t = d(:,2);
     
     % poincare plot before cleaning
-    plotflag = 1;
+    plotflag = 0;
     [sd1, sd2] = hr_poincare(RR, plotflag);
     if plotflag
         title(sprintf('LWP2_%s, %s, %s, Raw Data', subj, device, task_name));
