@@ -14,8 +14,9 @@ f_in = sprintf('tmp_LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
 sheet_names = sheet_names(2:end); % start from the 2nd sheet, 1st sheet is empty
 dir_out = fullfile(dir, 'HeartRate', 'HR_Data', sprintf('tmp_LWP2_%s_HRVAS', subj));
 mkdir(dir_out);
-    
-IGNORED_TASKS = {'Task18_March'};
+
+
+IGNORED_TASKS = {'Task2_RelaxingPic1','Task18_March'};
 for i = 1:length(sheet_names)
     task_name = sheet_names(i);
     fprintf('--------------------------------\n');
@@ -24,12 +25,10 @@ for i = 1:length(sheet_names)
         continue
     end
     clean(f_in, dir_out, subj, device, char(task_name));
-    disp(task_name);
     fprintf('%s finished\n', char(task_name));
 end
     
-
-   
+ 
 function clean(f_in, dir_out, subj, device, task_name)
     % read rr and rr_t of a task 
     d = xlsread(f_in, task_name);
