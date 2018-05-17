@@ -13,8 +13,8 @@ for i=1:length(iout)   % i = iout(
     k = 0;
     if isempty(find(iout(i)==idone))   % iout(i) has not yet been imputed
         ii = (iout(i)-k):(iout(i)+k);  % ii = iout(i)
-        % Increase range of events (i-k : i+k) so that the average is
-        % acceptable, i.e. sum x(ii)/length(ii) <= dmax
+        % Increase range of events (i-k : i+k) so that the average is acceptable, 
+        % i.e. sum x(ii)/length(ii) <= dmax
         while(sum(x(ii)) > dmax*length(ii)) 
             k = k + 1;
             ii = (iout(i)-k):(iout(i)+k);
@@ -23,9 +23,9 @@ for i=1:length(iout)   % i = iout(
         dp = sum(x(ii(ip)) - dmax)/length(ip);  % dp is the avg of the excess 
         xout(ii(ip)) = x(ii(ip)) - dp;   % Subtract the avg eccess from them
     
-        ip = find(x(ii) <= dmax);  % Find those x that exceed dmax 
-        dp = sum(x(ii(ip)) - dmax)/length(ip); % dp is the NEGATIVE avg of the 
-        xout(ii(ip)) = x(ii(ip)) - dp;  % add tthis (-(-abs(dp))
+        ip = find(x(ii) <= dmax);  % Find those x that are smaller than dmax 
+        dp = sum(x(ii(ip)) - dmax)/length(ip); % dp is the NEGATIVE avg of the deficiency
+        xout(ii(ip)) = x(ii(ip)) - dp;  % add this (-(-abs(dp))
         
         % figure, plot(xout), hold on, plot(iout, xout(iout),'*r')
         % plot(xout)

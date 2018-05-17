@@ -4,7 +4,7 @@ addpath(fullfile(dir, 'HeartRate', 'HR_Tools'));
 addpath(fullfile(dir, 'HeartRate', 'HR_Data'));
 addpath(fullfile(dir, 'HeartRate', 'HRVAS'));
 
-subj = '0003';
+subj = '0017';
 device = 'FirstBeat';
 %sdevice = 'MSBand';
 
@@ -16,7 +16,7 @@ dir_out = fullfile(dir, 'HeartRate', 'HR_Data', sprintf('tmp_LWP2_%s_HRVAS', sub
 mkdir(dir_out);
 
 
-IGNORED_TASKS = {'Task2_RelaxingPic1','Task18_March'};
+IGNORED_TASKS = {};
 for i = 1:length(sheet_names)
     task_name = sheet_names(i);
     fprintf('--------------------------------\n');

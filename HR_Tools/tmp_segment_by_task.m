@@ -25,7 +25,7 @@ task_names = {
     };
 
 
-subj = '0017';
+subj = '0003';
 device = 'FirstBeat';
 %device = 'MSBand';
 

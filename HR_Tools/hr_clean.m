@@ -25,6 +25,8 @@ nsigma = 4;                 % Limit in SD for outlier detection
 [sig2,mu,distxmah,outliers] = robustcov(xin);
 stdx = sqrt(sig2);
 %iout = find(outliers);                 % From robust variance estimate
+
+% remove small RR
 iout = find((xin - mu) < -nsigma*stdx); % with our criterion for outliers
 if plotflag
     figure, plot(tin,xin), hold on, plot(tin(iout),xin(iout),'*r')
@@ -33,8 +35,9 @@ if plotflag
     datetick
 end
 [xtmp, ttmp] = hr_remove_shortRR(xin, tin, iout);
-iout = find((xtmp - mu) > nsigma*stdx);
 
+% impute long RR
+iout = find((xtmp - mu) > nsigma*stdx);
 dmax = 2*stdx + mu;
 [RRclean, Tclean] = hr_imputeLong(xtmp,ttmp,iout,dmax);
 % figure, plot(RRclean), hold on, plot(iout, RRclean(iout),'*r')
