@@ -4,7 +4,7 @@ addpath(fullfile(dir, 'HeartRate', 'HR_Tools'));
 addpath(fullfile(dir, 'HeartRate', 'HR_Data'));
 addpath(fullfile(dir, 'HeartRate', 'HRVAS'));
 
-subj = '0017';
+subj = '0019';
 device = 'FirstBeat';
 %sdevice = 'MSBand';
 
@@ -44,7 +44,7 @@ function clean(f_in, dir_out, subj, device, task_name)
     
     % clean and smoothing
     win = 25; 
-    plotflag = 0;
+    plotflag = 1;
     [RR_t_clean, RR_clean] = hr_clean(RR_t, RR, win, plotflag);
 
     % poincare plot after cleaning
