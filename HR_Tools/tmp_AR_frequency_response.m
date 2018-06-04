@@ -12,6 +12,6 @@ figure, plot(x)
 % ar parameters
 [d1,p1] = aryule(x,7);
 
-% 
+
 freqz(sqrt(p1),d1)
 

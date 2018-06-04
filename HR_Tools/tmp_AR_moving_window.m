@@ -4,8 +4,8 @@ fp = fullfile(dir, 'HeartRate', 'HR_Data', 'tmp_LWP2_0019_HRVAS', 'LWP2_0019_Fir
 fileID = fopen(fp, 'r');
 r = fscanf(fileID, '%f');
 n = length(r);
-k = 16;
-window_size = 140;
+k = 10;
+window_size = 100;
 window_shift = window_size/2;
 
 % error: Nonseasonal autoregressive polynomial is unstable.
