@@ -38,7 +38,7 @@ grid on;
 % prediction (rhat) using fitted AR model 
 for i=k+1:n
     ri = r(i-k:i-1);
-    ri = fliplr(ri); % flip array left to right
+    ri = flipud(ri); % flip column vector upside down
     rhat(i) = A*ri + c;
 end
 rhat=rhat';

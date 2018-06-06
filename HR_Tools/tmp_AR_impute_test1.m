@@ -11,17 +11,17 @@ AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204   
 
 % set parameters
 miss_percent = 0.05;
-repeat = 1;
-err_metric = 'MAE';
+repeat = 2;
+err_metric = 'RMSE';
 
 % prediction/imputation error computed for repeated samples
 errs = zeros(1, length(repeat));
 for j=1:repeat
     miss_num = round(miss_percent*length(r));
-    miss_indices = random_miss(length(r), length(AR_coef)-1, miss_num);
-    r_hat = impute(r, miss_indices, AR_coef);
-    % plot_prediction(miss_indices, r_hat, r);
-    err = get_prediction_error(r(miss_indices), r_hat, err_metric);
+    i_miss = random_miss(length(r), length(AR_coef)-1, miss_num);
+    r_hat = impute(r, i_miss, AR_coef);
+    plot_prediction(i_miss, r_hat, r);
+    err = get_prediction_error(r(i_miss), r_hat, err_metric);
     errs(j) = err;
 end
 figure, histogram(errs);
@@ -45,15 +45,15 @@ function err = get_prediction_error(r_actual, r_hat, metric)
 end
 
 
-function r_hat = impute(r, miss_indices, AR_coef)
+function r_hat = impute(r, i_miss, AR_coef)
     % rng(0);
-    r_hat = zeros(1, length(miss_indices));
-    for i=1:length(miss_indices)
-        idx = miss_indices(i);
+    r_hat = zeros(1, length(i_miss));
+    for i=1:length(i_miss)
+        idx = i_miss(i);
         AR_order = length(AR_coef)-1;
         if idx > AR_order
             r_prev = r(idx-AR_order:idx-1);
-            r_prev = fliplr(r_prev);
+            r_prev = flipud(r_prev); % flip column vector upside down
             r_hat(i) = AR_coef(2:end)*r_prev + AR_coef(1);
         else
             r_hat(i) = 0;
@@ -61,20 +61,20 @@ function r_hat = impute(r, miss_indices, AR_coef)
     end
 end
 
-function miss_indices = random_miss(signal_length, AR_order, miss_num)
+function i_miss = random_miss(signal_length, AR_order, miss_num)
     % sample from indices larger than AR_order
-    miss_indices = randi([AR_order+1, signal_length], [1, miss_num]);
-    miss_indices = sort(miss_indices);
+    i_miss = randi([AR_order+1, signal_length], [1, miss_num]);
+    i_miss = sort(i_miss);
 end
 
-function plot_prediction(miss_indices, r_hat, r)
+function plot_prediction(i_miss, r_hat, r)
     figure, plot(r, 'b');
     hold on;
-    p1 = plot(miss_indices, r(miss_indices), 'b*');
-    p2 = plot(miss_indices, r_hat, 'r*');
+    p1 = plot(i_miss, r(i_miss), 'b*');
+    p2 = plot(i_miss, r_hat, 'r*');
     
-    for i=1:length(miss_indices)
-        idx = miss_indices(i);
+    for i=1:length(i_miss)
+        idx = i_miss(i);
         % draw line between points (idx, 0.5) and (idx, r(idx))
         % chose 0.5 as the lower range of r 
         % plot([idx idx], [0.5 r(idx)], 'b:');
