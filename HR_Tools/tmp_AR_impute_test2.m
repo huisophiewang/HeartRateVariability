@@ -11,7 +11,7 @@ AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204   
 % set parameters
 miss_percent = 0.01;
 num_runs = round(miss_percent*length(r));
-num_runs = 2;
+num_runs = 3;
 num_sigma = 4;  % limit for outlier detection
 
 % simulate missing value
@@ -19,19 +19,27 @@ r_miss = generate_miss_value_signal(r, length(AR_coef)-1, num_runs);
 %figure, plot(new_r, 'b');
 
 i_outliers = find_outliers(r_miss, num_sigma);    
-
+% 
 [r_imputed, i_outliers] = impute(r_miss, i_outliers, AR_coef);
+% 
+% figure, plot(r, 'b');
+% hold on;
+% plot(r_imputed, 'r');
+
+
+
+
 
 % recursively impute the first outlier, so that later outliers can
 % use previously imputed values if the indices are close
 function [r_new, i_outliers] = impute(r, i_outliers, AR_coef)
     AR_order = length(AR_coef)-1; 
-    while ~isempty(i_outliers)
+    for j=1:length(i_outliers)
         fprintf('--------------------------------\n');
         % remove the first outlier in i_outliers (smallest index)
-        i_start = i_outliers(1)
-        ri_long = r(i_start)
-        local_avg = (r(i_start-1) + r(i_start+1))/2
+        i_start = i_outliers(j)
+        ri_long = r(i_start);
+        local_avg = (r(i_start-1) + r(i_start+1))/2;
         num_points = round(r(i_start)/local_avg)
         ri_values = zeros(1, num_points);
         for k=1:num_points
@@ -56,9 +64,8 @@ function [r_new, i_outliers] = impute(r, i_outliers, AR_coef)
         r_new = vertcat(r(1:i_start-1), ri_values.', r(i_start+1:end));
         % for next iteration
         r = r_new;
-        % remove the first value from i_outliers
-        i_outliers(1) = [];
-        i_outliers = i_outliers + num_points-1;
+        % outlier indices changed after inserting imputed values
+        i_outliers(j+1:end) = i_outliers(j+1:end) + num_points-1;
     end
 end
 
@@ -70,9 +77,9 @@ end
 
 % generate long intervals by removing 1, 2, or 3 consecutive data points
 function r_new = generate_miss_value_signal(r, AR_order, num_runs)
-    while num_runs > 0
+    for j=1:num_runs
         fprintf('--------------------------------\n');
-        fprintf('num_runs = %d\n', num_runs);
+        fprintf('num_runs = %d\n', j);
         % remove num_point consecutive data points, could be 1, 2, or 3 points
         num_points = randsample(3, 1);
         fprintf('remove %d consecutive data points\n', num_points);
@@ -94,7 +101,6 @@ function r_new = generate_miss_value_signal(r, AR_order, num_runs)
         r_new(i_remove) = []; 
         % for next iteration
         r = r_new;
-        num_runs = num_runs - 1;
     end
 end
 
