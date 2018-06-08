@@ -11,7 +11,7 @@ AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204   
 
 % set parameters
 miss_percent = 0.05;
-repeat = 2;
+repeat = 1;
 err_metric = 'RMSE';
 
 % prediction/imputation error computed for repeated samples
