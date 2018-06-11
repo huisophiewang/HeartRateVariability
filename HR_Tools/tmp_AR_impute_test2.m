@@ -8,6 +8,7 @@ r = fscanf(fileID, '%f');
 
 % given AR(10) model [constant, a1, ..., a10]
 AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204    0.0322    0.0645    0.0183    0.1107];
+
 % set parameters
 miss_percent = 0.05;
 num_runs = round(miss_percent*length(r));
@@ -64,8 +65,6 @@ function [r_new, i_imputed] = impute(r, i_outliers, AR_coef)
     i_imputed = [];
     for j=1:length(i_outliers)
         fprintf('--------------------------------\n');
-        % remove the first outlier in i_outliers (smallest index)
-        j
         i_start = i_outliers(j)
         ri_long = r(i_start);
         if i_start == length(r)
@@ -79,15 +78,15 @@ function [r_new, i_imputed] = impute(r, i_outliers, AR_coef)
             i = i_start+k-1;
             r_original = r(i-AR_order : i_start-1).';
             if k==1
-                % use only original values to estimate the first point
+                % use only original signal to estimate the first point
                 r_prev = r_original;
             else
-                % use newly estimated values for later points
+                % use previously estimated values for later points
                 r_prev = [r_original, ri_values(1:k-1)];
             end
             r_prev = fliplr(r_prev);
             ri_values(k) = AR_coef(2:end)*r_prev.' + AR_coef(1);
-            % maintain the sum of total values
+            % for the last point, maintain the sum of total values
             if k == num_points
                 ri_values(k) = ri_long - sum(ri_values(1:k-1));
             end
