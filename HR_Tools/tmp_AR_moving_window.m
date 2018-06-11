@@ -5,7 +5,7 @@ fileID = fopen(fp, 'r');
 r = fscanf(fileID, '%f');
 n = length(r);
 k = 10;
-window_size = 100;
+window_size = 200;
 window_shift = window_size/2;
 
 % error: Nonseasonal autoregressive polynomial is unstable.

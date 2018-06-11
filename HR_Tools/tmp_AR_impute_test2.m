@@ -7,72 +7,61 @@ fileID = fopen(fp, 'r');
 r = fscanf(fileID, '%f');
 
 % given AR(10) model [constant, a1, ..., a10]
-AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204    0.0322    0.0645    0.0183    0.1107];
+%AR_coef = [0.0523    1.0043   -0.0452   -0.1302    0.0540   -0.0672   -0.1204    0.0322    0.0645    0.0183    0.1107];
 
 % set parameters
-miss_percent = 0.05;
-num_runs = round(miss_percent*length(r));
-num_runs = 16;
+AR_order = 10;
+AR_window_size = 200; % about 2 min
+num_runs = 1;  % number of times to remove data points for simulation
 num_sigma = 4;  % limit for outlier detection
-err_metric = 'RMSE';
+err_metric = 'MAE';
 repeat = 1;
 
 % prediction/imputation error computed for repeated samples
 errs = zeros(1, length(repeat));
 for n=1:repeat
     % simulate missing value
-    r_miss = generate_miss_value_signal(r, length(AR_coef)-1, num_runs);
+    r_miss = generate_miss_value_signal(r, AR_order, num_runs);
     % find outliers
     i_outliers = find_outliers(r_miss, num_sigma);    
-    [r_imputed, i_imputed] = impute(r_miss, i_outliers, AR_coef);
-    [r_imputed, i_imputed] = check_imputation(r_imputed, i_imputed, length(r));
-    plot_prediction(i_imputed, r_imputed, r);
-    err = get_prediction_error(r(i_imputed), r_imputed(i_imputed), err_metric);
-    errs(n) = err;
+    [r_imputed, i_imputed] = impute(r_miss, i_outliers, AR_order, AR_window_size);
+    %[r_imputed, i_imputed] = check_imputation(r_imputed, i_imputed, length(r));
+    %plot_prediction(i_imputed, r_imputed, r);
+    %err = get_prediction_error(r(i_imputed), r_imputed(i_imputed), err_metric);
+    %errs(n) = err;
 end
-figure, histogram(errs);
-title(sprintf('%s, %d runs, %d percent missing data', err_metric, repeat, miss_percent*100));
-
-
-function [r_imputed, i_imputed] = check_imputation(r_imputed, i_imputed, original_length)
-    if length(r_imputed) < original_length
-        % if imputed signal is shorter, fill in avg values 
-        r_avg = mean(r_imputed);
-        r_fill = zeros(1, original_length - length(r_imputed));
-        for i=1:length(r_fill)
-            r_fill(i)=r_avg;
-        end
-        r_imputed = vertcat(r_imputed, r_fill.');
-    elseif length(r_imputed) > original_length
-        % if imputed signal is longer, cut the extra tail
-        i_cut = length(i_imputed);
-        for i=1:length(i_imputed)
-            idx = i_imputed(i);
-            if idx > original_length
-                i_cut = i-1;
-                break
-            end
-        end
-        i_imputed = i_imputed(1:i_cut);
-        r_imputed = r_imputed(1:original_length);
-    end
-end
+%figure, histogram(errs);
+%title(sprintf('%s, %d runs, %d percent missing data', err_metric, repeat, miss_percent*100));
 
 % recursively impute the first outlier, so that later outliers can
 % use previously imputed values if the indices are close
-function [r_new, i_imputed] = impute(r, i_outliers, AR_coef)
-    AR_order = length(AR_coef)-1; 
+function [r_new, i_imputed] = impute(r, i_outliers, AR_order, AR_window_size)
     i_imputed = [];
     for j=1:length(i_outliers)
         fprintf('--------------------------------\n');
-        i_start = i_outliers(j)
+        i_start = i_outliers(j);
         ri_long = r(i_start);
-        if i_start == length(r)
-            local_avg = r(i_start-1);
-        else
-            local_avg = (r(i_start-1) + r(i_start+1))/2;
+        
+%         if i_start == length(r)
+%             local_avg = r(i_start-1);
+%         else
+%             local_avg = (r(i_start-1) + r(i_start+1))/2;
+%         end
+%         num_points = round(r(i_start)/local_avg)
+        
+        left_bound = i_start - AR_window_size/2;
+        right_bound = i_start + AR_window_size/2;
+        r_windowed = r(left_bound:right_bound);
+        mdl = estimate(arima(AR_order, 0, 0), r_windowed); 
+        A = cell2mat(mdl.AR);
+        c = mdl.Constant;
+        AR_coefs = [A, c];
+        
+        ri_sum = 0;
+        while ri_sum < ri_long
+            r_original = r(i-AR_order : i_start-1).';
         end
-        num_points = round(r(i_start)/local_avg)
+        
         ri_values = zeros(1, num_points);
         for k=1:num_points
             i = i_start+k-1;
@@ -101,14 +90,7 @@ function [r_new, i_imputed] = impute(r, i_outliers, AR_coef)
         i_outliers(j+1:end) = i_outliers(j+1:end) + num_points-1;
         % save the indices of imputed values
         i_imputed = [i_imputed, (i_start:i_start+num_points-1)];
-    end
-        
-end
-
-function i_outliers = find_outliers(r, num_sigma)
-    [r_var,r_mu,~] = robustcov(r);
-    r_std = sqrt(r_var);
-    i_outliers = find((r - r_mu) > num_sigma*r_std);
+    end    
 end
 
 % generate long intervals by removing 1, 2, or 3 consecutive data points
@@ -139,6 +121,38 @@ function r_new = generate_miss_value_signal(r, AR_order, num_runs)
         r = r_new;
     end
 end
+
+function [r_imputed, i_imputed] = check_imputation(r_imputed, i_imputed, original_length)
+    if length(r_imputed) < original_length
+        % if imputed signal is shorter, fill in avg values 
+        r_avg = mean(r_imputed);
+        r_fill = zeros(1, original_length - length(r_imputed));
+        for i=1:length(r_fill)
+            r_fill(i)=r_avg;
+        end
+        r_imputed = vertcat(r_imputed, r_fill.');
+    elseif length(r_imputed) > original_length
+        % if imputed signal is longer, cut the extra tail
+        i_cut = length(i_imputed);
+        for i=1:length(i_imputed)
+            idx = i_imputed(i);
+            if idx > original_length
+                i_cut = i-1;
+                break
+            end
+        end
+        i_imputed = i_imputed(1:i_cut);
+        r_imputed = r_imputed(1:original_length);
+    end
+end
+
+
+function i_outliers = find_outliers(r, num_sigma)
+    [r_var,r_mu,~] = robustcov(r);
+    r_std = sqrt(r_var);
+    i_outliers = find((r - r_mu) > num_sigma*r_std);
+end
+
 
 function plot_prediction(i_imputed, r_imputed, r)
     figure, plot(r, 'b.-', 'MarkerSize',8);

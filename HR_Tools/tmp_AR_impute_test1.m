@@ -20,12 +20,12 @@ for j=1:repeat
     miss_num = round(miss_percent*length(r));
     i_miss = random_miss(length(r), length(AR_coef)-1, miss_num);
     r_hat = impute(r, i_miss, AR_coef);
-    plot_prediction(i_miss, r_hat, r);
-    err = get_prediction_error(r(i_miss), r_hat, err_metric);
-    errs(j) = err;
+    %plot_prediction(i_miss, r_hat, r);
+    %err = get_prediction_error(r(i_miss), r_hat, err_metric);
+    %errs(j) = err;
 end
-figure, histogram(errs);
-title(sprintf('%s, %d runs, %d percent missing data', err_metric, repeat, miss_percent*100));
+%figure, histogram(errs);
+%title(sprintf('%s, %d runs, %d percent missing data', err_metric, repeat, miss_percent*100));
 
 
 function err = get_prediction_error(r_actual, r_hat, metric)
