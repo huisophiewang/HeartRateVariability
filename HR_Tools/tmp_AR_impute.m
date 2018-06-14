@@ -47,10 +47,7 @@ function [r, i_imputed] = impute(r, i_outliers, AR_order, AR_window_size)
         i_start = i_outliers(j);    % index of the outlier
         ri_long = r(i_start);   % value of the outlier
         % estimate the number of points to impute based on the previous data point
-        num_points = round(ri_long/r(i_start-1)) 
-        if num_points ~= 2
-            fprintf('num_points=%d, i_start=%d, ri_long=%f, r(i_start-1)=%f \n', num_points, i_start, ri_long, r(i_start-1));
-        end
+        num_points = round(ri_long/r(i_start-1));
         % set AR window
         left_bound = i_start - AR_window_size/2;
         right_bound = i_start + AR_window_size/2;
@@ -118,9 +115,9 @@ end
 
 
 function i_outliers = find_outliers(r, num_sigma)
-    [r_var,r_mu,~] = robustcov(r);
+    [r_var,r_mean,~] = robustcov(r);
     r_std = sqrt(r_var);
-    i_outliers = find((r - r_mu) > num_sigma*r_std);
+    i_outliers = find((r - r_mean) > num_sigma*r_std);
 end
 
 

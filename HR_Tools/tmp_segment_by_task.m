@@ -25,7 +25,7 @@ task_names = {
     };
 
 
-subj = '0003';
+subj = '0019';
 device = 'FirstBeat';
 %device = 'MSBand';
 
@@ -37,7 +37,7 @@ f_out = sprintf('tmp_LWP2_%s_%s_RR_raw_data_by_task.xlsx', subj, device);
 % read input files
 load(fp_in_data); 
 [ndata, tdata, ~] = xlsread(fp_in_timing);
-dominant_hand = tdata(11,10);
+dominant_hand = tdata(11,12);
 computer_os = computer('arch');
 
 % get date, xlsread date field depends on os
@@ -70,7 +70,7 @@ for i=1:length(task_names)
     end    
     
     warning('off','MATLAB:xlswrite:AddSheet');
-    write_segment(f_out, task_name, RR, RR_t, start_time, end_time);
+    %write_segment(f_out, task_name, RR, RR_t, start_time, end_time);
 end
 
 
