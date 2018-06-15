@@ -1,5 +1,5 @@
 % estimate missing data using AR
-function [r_out, t_out] = tmp_hr_impute_long(r, t, i_outliers, AR_order, AR_window_size)  
+function [r_out, t_out, i_imputed] = hr_impute_long_AR(r, t, i_outliers, AR_order, AR_window_size)  
     i_imputed = [];
     for j=1:length(i_outliers)
         i_start = i_outliers(j);    % index of the outlier
@@ -39,7 +39,7 @@ function [r_out, t_out] = tmp_hr_impute_long(r, t, i_outliers, AR_order, AR_wind
             ri = A*r_prev.' + c;
             r_imputed_values = [r_imputed_values, ri];
             i_imputed = [i_imputed, i];
-            fprintf('sum of imputed ri  = %f \n', sum(r_imputed_values));
+            disp(r_imputed_values);
         end 
         weight = ri_long / sum(r_imputed_values); 
         % make sure the sum of imputed values is equal to the outlier
@@ -50,7 +50,6 @@ function [r_out, t_out] = tmp_hr_impute_long(r, t, i_outliers, AR_order, AR_wind
         i_outliers(j+1:end) = i_outliers(j+1:end) + num_points-1;
     end    
     r_out = r;
-    t_start = t(1) - r_out(1);
     t_out = t(1) + cumsum(r_out)/(1000*24*3600);
     
 end

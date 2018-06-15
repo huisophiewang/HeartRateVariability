@@ -6,7 +6,6 @@ all_subjs = {'LWP2_0019'};
 
 for i=1:length(all_subjs)
     subj = all_subjs(i);
-
     disp(subj); 
     hr_get_data(char(subj));
 end

@@ -1,4 +1,4 @@
-function [rout,tout,res,vr,eigf] =hr_ssa(xin,L,grp,plotflag)
+function [rout,tout,res,vr,eigf] =hr_ssa(xin,tin,L,grp,plotflag)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -----------------------------------------------------------------
@@ -128,7 +128,8 @@ rout(ix) = xhat(ix);
 if plotflag
     figure; plot(xin); hold on;  plot(xhat); legend('RR','RR-Smooth');
 end
-tout = cumsum(rout);
+%tout = cumsum(rout);
+tout = tin(1) + cumsum(rout)/(1000*24*3600);
 
 
 
