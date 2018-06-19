@@ -25,9 +25,9 @@ task_names = {
     };
 
 
-subj = '0019';
-device = 'FirstBeat';
-%device = 'MSBand';
+subj = '0003';
+%device = 'FirstBeat';
+device = 'MSBand';
 
 % input and output files
 fp_in_data = sprintf('tmp_LWP2_%s_Data.mat', subj);
@@ -60,17 +60,18 @@ for i=1:length(task_names)
         RR = FB_RR;
         RR_t = FB_Time_RR;
     elseif strcmp(device, 'MSBand')
-        if strcmp(dominant_hand, 'RIGHT')
-            RR = BandRR_L;
-            RR_t = BandTimeRR_L;
-        elseif strcmp(dominant_hand, 'LEFT')
+        % nondominant hand has less movement, is more accurate
+        if strcmp(dominant_hand, 'LEFT')
             RR = BandRR_R;
-            RR_t = BandTimeRR_R;  
+            RR_t = BandTimeRR_R;
+        elseif strcmp(dominant_hand, 'RIGHT')
+            RR = BandRR_L;
+            RR_t = BandTimeRR_L;  
         end
     end    
     
     warning('off','MATLAB:xlswrite:AddSheet');
-    %write_segment(f_out, task_name, RR, RR_t, start_time, end_time);
+    write_segment(f_out, task_name, RR, RR_t, start_time, end_time);
 end
 
 

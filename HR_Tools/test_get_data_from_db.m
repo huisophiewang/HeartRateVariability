@@ -1,11 +1,24 @@
 clear all
-all_subjs = {'LWP2_0019'};
     
-% one_subj = 'LWP2_0015';
-% hr_get_data(one_subj);
+subj = 'LWP2_0015';
+conn2 = database('deephealth2', 'deepresearcher', 'UJqTPYqKF84YMVNJ', 'Vendor', 'MySQL', 'Server', 'deephealthlab.org');
 
-for i=1:length(all_subjs)
-    subj = all_subjs(i);
-    disp(subj); 
-    hr_get_data(char(subj));
-end
+
+fname = sprintf('tmp_%s_Data_MSBand.mat',subj);    % mat file to store the data
+
+% Band RR Left 
+Tx = fetch( conn2, 'SELECT * FROM deephealth2.view_msband_rr where user="lwp2_0015" and device_id="58:82:A8:CF:B9:59" order by unix_timestamp ASC');
+% Convert to matlab time
+BandTimeRR_L = datenum(datetime(cell2mat(Tx(:,1))/1000,'ConvertFrom','posixtime', 'TimeZone', 'America/New_York'));
+rr = cell2mat(Tx(:,2));        % Raw data in seconds
+rrtime = cumsum(rr);
+
+% ???
+X = [ones(length(rr),1), rrtime];
+bcoef = regress(BandTimeRR_L,X);
+
+BandRR_L = rr;               
+BandTimeRR_L = rrtime/(24*3600) + bcoef(1);
+
+
+save(fname, 'BandRR_L', 'BandTimeRR_L');
