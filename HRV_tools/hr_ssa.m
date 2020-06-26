@@ -129,7 +129,7 @@ if plotflag
     figure; plot(xin); hold on;  plot(xhat); legend('RR','RR-Smooth');
 end
 %tout = cumsum(rout);
-tout = tin(1) + cumsum(rout)/(1000*24*3600);
+tout = tin(1) + cumsum(rout)/(24*3600);
 
 
 

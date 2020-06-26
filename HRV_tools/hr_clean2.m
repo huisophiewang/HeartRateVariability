@@ -1,73 +1,90 @@
-function [r_clean, t_clean] = hr_clean2(r_in, t_in, nsigma, AR_order, AR_window, ssa_window, plotflag)
+function [rr_clean, rr_t_clean] = hr_clean2(rr_in, rr_t_in, AR_order, AR_window, ssa_window, plotflag)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Authors:
+%   Sophie Wang (huiwang@ccs.neu.edu)
+%   modified based on hr_clean.m by Misha Pavel (m.pavel@northeastern.edu)
+% Description: 
+%   Data cleaning in the RR space
+%   Compute robust standard deviation and
+%   remove  too short samples rr - mu <  -nsigma*stdx, adjust remaining
+%   Impute too long rr samples using autoregression (AR)
+%   Use a SSA based smoothing
+% Inputs:
+%   rr_in          - a sequence of rr intervals (in seconds)
+%   rr_t_in          - timestamps associated with each R event (in matlab time)
+%   AR_order      - order of AR for imputing large rr (e.g. AR_order=10)
+%   AR_window     - window size of AR for imputing large rr (e.g. AR_window=250)
+%   ssa_window    - window size for ssa smoothing and interpolation (e.g. ssa_window=25)
+%   plotflag      - logical 1 if plots are desired
+% Outputs:
+%   rr_clean       - cleaned rr intervals
+%   rr_t_clean       - cleaned timestamps associated with each R event 
+% Depenndencies: 
+%   Matlab: robustcov()
+%   external:    hr_findOutliers, hr_removeShortRR2, hr_imputeLong2, hr_ssa     
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % plot input raw signal
 if plotflag
-    figure, plot(t_in, r_in, 'b.-', 'MarkerSize',8); 
+    figure, plot(rr_t_in, rr_in, 'b.-', 'MarkerSize',8); 
     datetick('x', 'HH:MM:SS'); 
-    ylabel('RR (msec)');
+    ylabel('RR (sec)');
     title('original RR signal');
 end
 
-% Pass 1: identify extreme outliers using robust variance estimation
-[r_var,r_mean, ~] = robustcov(r_in);
-r_std = sqrt(r_var);
+% find short rr
+i_short_outliers = hr_findShortOutliers(rr_in, rr_t_in, plotflag);
 
-% mark small r
+% remove short rr
+[rr_tmp1, rr_t_tmp1] = hr_removeShortRR(rr_in, rr_t_in, i_short_outliers);
+
+
+
+% after removing short outliers
 if plotflag
-    i_outliers = find((r_in - r_mean) < -nsigma*r_std); 
-    figure, plot(t_in, r_in, 'b.-', 'MarkerSize',8);
+    figure, plot(rr_t_tmp1, rr_tmp1, 'b.-', 'MarkerSize',8);
     hold on;
-    plot(t_in(i_outliers),r_in(i_outliers),'*r')
     datetick('x', 'HH:MM:SS'); 
-    ylabel('RR (msec)');
-    title('mark small outliers');
+    ylabel('RR (sec)');
+    title('after removing small outliers');
 end
 
-% remove small r
-[r_tmp1, t_tmp1] = hr_remove_shortRR(r_in, t_in, i_outliers);
+% find long rr
+i_long_outliers = hr_findLongOutliers2(rr_tmp1, rr_t_tmp1, plotflag);
 
-% mark big r
-if plotflag
-    i_outliers = find((r_tmp1 - r_mean) > nsigma*r_std);
-    figure, plot(t_tmp1, r_tmp1, 'b.-', 'MarkerSize',8);
-    hold on;
-    plot(t_tmp1(i_outliers), r_tmp1(i_outliers),'*r')
-    datetick('x', 'HH:MM:SS'); 
-    ylabel('RR (msec)');
-    title('mark big outliers');
-end
-
-% remove big r
-[r_tmp2, t_tmp2, i_imputed] = hr_impute_long_AR(r_tmp1, t_tmp1, i_outliers, AR_order, AR_window);
+% remove big rr
+[rr_tmp2, rr_t_tmp2, i_imputed] = hr_imputeLong2(rr_tmp1, rr_t_tmp1, i_long_outliers, AR_order, AR_window);
 
 % plot after pass 1
 if plotflag
-    figure, plot(t_tmp2, r_tmp2, 'b.-', 'MarkerSize',8); 
+    figure, plot(rr_t_tmp2, rr_tmp2, 'b.-', 'MarkerSize',8); 
     hold on;
-    plot(t_tmp2(i_imputed), r_tmp2(i_imputed), 'r.', 'MarkerSize',8);
+    plot(rr_t_tmp2(i_imputed), rr_tmp2(i_imputed), 'r.', 'MarkerSize',8);
     datetick('x', 'HH:MM:SS'); 
-    ylabel('RR (msec)');
+    ylabel('RR (sec)');
     title('RR signal after removing outliers');
 end
 
-t_clean = t_tmp2;
-r_clean = r_tmp2;
+rr_t_clean = rr_t_tmp2;
+rr_clean = rr_tmp2;
+% 
+% % Pass 2: identify extreme outliers using SSA smoothing
+% grp = [1 2 3 4]; % Top eigenfunctions to use in reconstrucrr_t_ing smooth version
+% [rr_clean, rr_t_clean, ~]=hr_ssa(rr_clean, rr_t_clean, ssa_window, grp, plotflag);   
+% 
+% % plot after pass 2
+% if plotflag
+%     figure, plot(rr_t_clean, rr_clean, 'b.-', 'MarkerSize',8); 
+%     datetick('x', 'HH:MM:SS'); 
+%     ylabel('RR (sec)');
+%     title('RR signal after SSA smoothing');
+% end
 
-% Pass 2: identify extreme outliers using SSA smoothing
-grp = [1 2 3 4]; % Top eigenfunctions to use in reconstruct_ing smooth version
-plotflag = 0;
-[r_clean, t_clean, ~]=hr_ssa(r_clean, t_clean, ssa_window, grp, plotflag);   
-
-% plot after pass 2
-plotflag = 1;
-if plotflag
-    figure, plot(t_clean, r_clean, 'b.-', 'MarkerSize',8); 
-    datetick('x', 'HH:MM:SS'); 
-    ylabel('RR (msec)');
-    title('RR signal after SSA smoothing');
-end
-
-% TODO?
+% TODO:
 % For small deviations, use the original values
 % but replace large deviations with the xsmooth values
+
+% when acc is small, use raw rr,
+% when acc is big, use cleaned rr
+% refer to Misha's slides, acc threshold 0.06~0.07
 end
